@@ -8,6 +8,8 @@ const Todo = (data) =>  {
   const [todo, setTodo] = useState('');
   const [todos, setTodos] = useState(data.data.getList);
 
+  let socket = null
+
   const handleNameChange = (event) => {
     setName(event.target.value)
   }
@@ -37,17 +39,22 @@ const Todo = (data) =>  {
         mutation: ADD_TODO_MUTATION,
         variables: {name: name, todo: todo}
       })
-      // console.log(res.data.addTodo.todo)
+      setName('');
+      setTodo('');
     } catch (error) {
       console.log(error)
     }
   return
   }
-
+  
   useEffect(()=>{
-    const socket = new WebSocket('ws://localhost:7000')
+    socket = new WebSocket('ws://192.168.0.112:7000')
     socket.onopen = () => {
       console.log('WebSocket Connection')
+    }
+    socket.onmessage = (event) => {
+      console.log(event.data)
+      setTodos((prevTodos) => [...prevTodos, JSON.parse(event.data)])
     }
     return () => socket.close()
   },[])
@@ -85,7 +92,8 @@ const Todo = (data) =>  {
 }
 
 export async function getServerSideProps() {
-  const {data} = await client.query({
+  console.log(" wsdfj ")
+  let {data} = await client.query({
     query: gql `
     query {
       getList {
@@ -96,6 +104,7 @@ export async function getServerSideProps() {
     }
     `
   })
+  console.log(data)
   return { props: { data } };
 }
 
